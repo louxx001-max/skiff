@@ -10,23 +10,29 @@ permissions:
 jobs:
   build:
     runs-on: macos-15
+    env:
+      BUILD: ${{ github.run_number }}
     steps:
       - uses: actions/checkout@v4
+      - run: python3 tools/make_blocklist.py Sources/blocklist.json
       - run: brew install xcodegen
       - run: xcodegen generate
       - name: Build unsigned app
         run: |
           xcodebuild -project Skiff.xcodeproj -scheme Skiff -configuration Release \
             -sdk iphoneos -destination 'generic/platform=iOS' -derivedDataPath build \
+            MARKETING_VERSION=1.0.$BUILD CURRENT_PROJECT_VERSION=$BUILD \
             CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" build
       - name: Package IPA
         run: |
           mkdir Payload
           cp -R build/Build/Products/Release-iphoneos/Skiff.app Payload/
           zip -qr Skiff.ipa Payload
+          python3 tools/make_source.py $BUILD Skiff.ipa > source.json
+      # Each build is its own release; SideStore reads releases/latest/download/source.json.
       - name: Publish release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release delete latest --yes --cleanup-tag || true
-          gh release create latest Skiff.ipa --title "Skiff (latest build)" --notes "Built from ${GITHUB_SHA::7}"
+          gh release create v1.0.$BUILD Skiff.ipa source.json \
+            --title "Skiff 1.0.$BUILD" --notes "Built from ${GITHUB_SHA::7}"

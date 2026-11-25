@@ -25,6 +25,7 @@ struct BrowserView: View {
                     ProgressView(value: tab.progress).progressViewStyle(.linear)
                 }
             }
+            .overlay(alignment: .bottom) { blockedBanner }
             bottomBar
         }
         .onAppear {
@@ -34,6 +35,30 @@ struct BrowserView: View {
         .onChange(of: editing) { address = $0 ? (tab.url?.absoluteString ?? "") : (tab.url?.host ?? "") }
         .onChange(of: tab.url) { if !editing { address = $0?.host ?? "" } }
         .sheet(isPresented: $showTabs) { TabsView() }
+    }
+
+    @ViewBuilder private var blockedBanner: some View {
+        if let target = tab.blocked {
+            HStack(spacing: 10) {
+                Image(systemName: "hand.raised.fill").foregroundStyle(.orange)
+                Text("Blocked \(target.host ?? "pop-up")")
+                    .font(.subheadline)
+                    .lineLimit(1)
+                Spacer(minLength: 4)
+                Button("Open") { tab.openBlocked() }.font(.subheadline.bold())
+                Button { tab.blocked = nil } label: { Image(systemName: "xmark") }
+                    .foregroundStyle(.secondary)
+            }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 10)
+            .background(.regularMaterial, in: Capsule())
+            .padding(10)
+            .transition(.move(edge: .bottom).combined(with: .opacity))
+            .task(id: target) {
+                try? await Task.sleep(nanoseconds: 5_000_000_000)
+                if tab.blocked == target { withAnimation { tab.blocked = nil } }
+            }
+        }
     }
 
     private var bottomBar: some View {

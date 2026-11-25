@@ -3,3 +3,4 @@ build/
 Info.plist
 *.ipa
 Payload/
+Sources/blocklist.json
