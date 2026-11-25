@@ -20,13 +20,16 @@ struct BrowserView: View {
                 if tab.url == nil { StartPage { tab.load($0) } }
                 WebView(webView: tab.webView)
                     .opacity(tab.url == nil ? 0 : 1)
-                    .ignoresSafeArea(.container, edges: .top)
                 if tab.isLoading {
                     ProgressView(value: tab.progress).progressViewStyle(.linear)
                 }
             }
             .overlay(alignment: .bottom) { blockedBanner }
             bottomBar
+        }
+        .background {
+            Color(uiColor: tab.url == nil ? .systemBackground : (tab.themeColor ?? .systemBackground))
+                .ignoresSafeArea()
         }
         .onAppear {
             address = tab.url?.host ?? ""

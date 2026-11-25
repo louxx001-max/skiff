@@ -11,6 +11,8 @@ final class Tab: NSObject, ObservableObject, Identifiable, WKNavigationDelegate,
     @Published var canGoBack = false
     @Published var canGoForward = false
     @Published var snapshot: UIImage?
+    /// The site's <meta name="theme-color">, used to tint the status-bar strip like Safari.
+    @Published var themeColor: UIColor?
     /// Last pop-up or redirect the blocker stopped; shown as a banner the user can override.
     @Published var blocked: URL?
     private var pending: URL?
@@ -36,6 +38,7 @@ final class Tab: NSObject, ObservableObject, Identifiable, WKNavigationDelegate,
             webView.observe(\.isLoading) { [weak self] wv, _ in self?.isLoading = wv.isLoading },
             webView.observe(\.canGoBack) { [weak self] wv, _ in self?.canGoBack = wv.canGoBack },
             webView.observe(\.canGoForward) { [weak self] wv, _ in self?.canGoForward = wv.canGoForward },
+            webView.observe(\.themeColor) { [weak self] wv, _ in self?.themeColor = wv.themeColor },
         ]
         if let url {
             if deferLoad { self.url = url; pending = url } else { load(url) }
