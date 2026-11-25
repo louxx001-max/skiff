@@ -53,7 +53,7 @@ struct BrowserView: View {
                         .foregroundStyle(.secondary)
                 } else if !editing, tab.url != nil {
                     Button {
-                        tab.isLoading ? tab.webView.stopLoading() : tab.webView.reload()
+                        if tab.isLoading { tab.webView.stopLoading() } else { tab.webView.reload() }
                     } label: { Image(systemName: tab.isLoading ? "xmark" : "arrow.clockwise") }
                 }
             }
