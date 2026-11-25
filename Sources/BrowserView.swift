@@ -32,6 +32,7 @@ struct BrowserView: View {
                 .ignoresSafeArea()
         }
         .onAppear {
+            tab.show()
             address = tab.url?.host ?? ""
             if tab.url == nil { editing = true }
         }

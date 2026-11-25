@@ -16,6 +16,8 @@ final class Tab: NSObject, ObservableObject, Identifiable, WKNavigationDelegate,
     /// Last pop-up or redirect the blocker stopped; shown as a banner the user can override.
     @Published var blocked: URL?
     private var pending: URL?
+    private var rulesReady = false
+    private var shown = false
     private var bypassNext = false
     private var observers: [NSKeyValueObservation] = []
 
@@ -26,6 +28,7 @@ final class Tab: NSObject, ObservableObject, Identifiable, WKNavigationDelegate,
         // Without the Safari token some sites serve a stripped-down page.
         config.applicationNameForUserAgent = "Version/18.0 Mobile/15E148 Safari/604.1"
         if let ruleList { config.userContentController.add(ruleList) }
+        rulesReady = ruleList != nil
         webView = WKWebView(frame: .zero, configuration: config)
         super.init()
         webView.allowsBackForwardNavigationGestures = true
@@ -45,10 +48,21 @@ final class Tab: NSObject, ObservableObject, Identifiable, WKNavigationDelegate,
         }
     }
 
-    /// Adds the ad-block rules once they're compiled, then starts any load held back for them.
+    /// Adds the ad-block rules once they're compiled.
     func attach(_ ruleList: WKContentRuleList?) {
         if let ruleList { webView.configuration.userContentController.add(ruleList) }
-        if let p = pending { load(p) }
+        rulesReady = true
+        loadPendingIfReady()
+    }
+
+    /// Called when the tab is on screen; restored tabs only load once they're looked at.
+    func show() {
+        shown = true
+        loadPendingIfReady()
+    }
+
+    private func loadPendingIfReady() {
+        if shown, rulesReady, let p = pending { load(p) }
     }
 
     func load(_ url: URL) {
